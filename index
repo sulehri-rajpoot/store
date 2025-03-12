@@ -1,0 +1,168 @@
+import tkinter as tk
+from tkinter import ttk, messagebox, filedialog
+import sqlite3
+from datetime import datetime
+import csv
+
+# Database setup
+conn = sqlite3.connect('invoice_stock.db')
+cursor = conn.cursor()
+
+# Create tables
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE
+)
+''')
+
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    category_id INTEGER,
+    stock INTEGER DEFAULT 0,
+    FOREIGN KEY (category_id) REFERENCES categories(id)
+)
+''')
+
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS invoices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    invoice_number TEXT NOT NULL UNIQUE,
+    customer_name TEXT NOT NULL,
+    date TEXT NOT NULL,
+    note TEXT
+)
+''')
+
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS invoice_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    invoice_id INTEGER,
+    product_id INTEGER,
+    quantity INTEGER,
+    balance INTEGER,
+    return_quantity INTEGER DEFAULT 0,
+    notes TEXT,
+    FOREIGN KEY (invoice_id) REFERENCES invoices(id),
+    FOREIGN KEY (product_id) REFERENCES products(id)
+)
+''')
+
+conn.commit()
+
+# Main Application
+class InvoiceStockApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Invoice & Stock Management System")
+        self.root.geometry("1200x800")
+
+        # Notebook (Tabbed Interface)
+        self.notebook = ttk.Notebook(root)
+        self.notebook.pack(fill=tk.BOTH, expand=True)
+
+        # Invoice Management Tab
+        self.invoice_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.invoice_tab, text="Invoice Management")
+
+        # Category & Product Management Tab
+        self.product_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.product_tab, text="Category & Product Management")
+
+        # Stock Tracking Tab
+        self.stock_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.stock_tab, text="Stock Tracking")
+
+        # Initialize Tabs
+        self.setup_invoice_tab()
+        self.setup_product_tab()
+        self.setup_stock_tab()
+
+    def setup_invoice_tab(self):
+        # Invoice Management UI
+        tk.Label(self.invoice_tab, text="Invoice Number:").grid(row=0, column=0, padx=10, pady=10)
+        self.invoice_number = tk.Entry(self.invoice_tab)
+        self.invoice_number.grid(row=0, column=1, padx=10, pady=10)
+
+        tk.Label(self.invoice_tab, text="Customer Name:").grid(row=1, column=0, padx=10, pady=10)
+        self.customer_name = tk.Entry(self.invoice_tab)
+        self.customer_name.grid(row=1, column=1, padx=10, pady=10)
+
+        tk.Label(self.invoice_tab, text="Date:").grid(row=2, column=0, padx=10, pady=10)
+        self.date = tk.Entry(self.invoice_tab)
+        self.date.insert(0, datetime.now().strftime("%Y-%m-%d"))
+        self.date.grid(row=2, column=1, padx=10, pady=10)
+
+        tk.Label(self.invoice_tab, text="Note:").grid(row=3, column=0, padx=10, pady=10)
+        self.note = tk.Text(self.invoice_tab, height=5, width=30)
+        self.note.grid(row=3, column=1, padx=10, pady=10)
+
+        tk.Button(self.invoice_tab, text="Create Invoice", command=self.create_invoice).grid(row=4, column=1, pady=10)
+
+    def setup_product_tab(self):
+        # Category & Product Management UI
+        tk.Label(self.product_tab, text="Category Name:").grid(row=0, column=0, padx=10, pady=10)
+        self.category_name = tk.Entry(self.product_tab)
+        self.category_name.grid(row=0, column=1, padx=10, pady=10)
+
+        tk.Button(self.product_tab, text="Add Category", command=self.add_category).grid(row=0, column=2, padx=10, pady=10)
+
+        tk.Label(self.product_tab, text="Product Name:").grid(row=1, column=0, padx=10, pady=10)
+        self.product_name = tk.Entry(self.product_tab)
+        self.product_name.grid(row=1, column=1, padx=10, pady=10)
+
+        tk.Label(self.product_tab, text="Category:").grid(row=2, column=0, padx=10, pady=10)
+        self.category_combobox = ttk.Combobox(self.product_tab)
+        self.category_combobox.grid(row=2, column=1, padx=10, pady=10)
+        self.update_category_combobox()
+
+        tk.Button(self.product_tab, text="Add Product", command=self.add_product).grid(row=2, column=2, padx=10, pady=10)
+
+    def setup_stock_tab(self):
+        # Stock Tracking UI
+        tk.Label(self.stock_tab, text="Product:").grid(row=0, column=0, padx=10, pady=10)
+        self.stock_product_combobox = ttk.Combobox(self.stock_tab)
+        self.stock_product_combobox.grid(row=0, column=1, padx=10, pady=10)
+        self.update_stock_product_combobox()
+
+        tk.Label(self.stock_tab, text="Quantity:").grid(row=1, column=0, padx=10, pady=10)
+        self.stock_quantity = tk.Entry(self.stock_tab)
+        self.stock_quantity.grid(row=1, column=1, padx=10, pady=10)
+
+        tk.Button(self.stock_tab, text="Add Stock", command=self.add_stock).grid(row=2, column=1, pady=10)
+
+    def create_invoice(self):
+        # Logic to create an invoice
+        pass
+
+    def add_category(self):
+        # Logic to add a category
+        pass
+
+    def add_product(self):
+        # Logic to add a product
+        pass
+
+    def add_stock(self):
+        # Logic to add stock
+        pass
+
+    def update_category_combobox(self):
+        # Update category combobox
+        cursor.execute("SELECT name FROM categories")
+        categories = cursor.fetchall()
+        self.category_combobox['values'] = [category[0] for category in categories]
+
+    def update_stock_product_combobox(self):
+        # Update stock product combobox
+        cursor.execute("SELECT name FROM products")
+        products = cursor.fetchall()
+        self.stock_product_combobox['values'] = [product[0] for product in products]
+
+# Run the application
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = InvoiceStockApp(root)
+    root.mainloop()
